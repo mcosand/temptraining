@@ -67,7 +67,7 @@ namespace Kcesar.TrainingSite.Areas.Identity.Pages.Account
       return new ChallengeResult(provider, properties);
     }
 
-    public async Task<IActionResult> OnGetCallbackAsync(string returnUrl = null, string remoteError = null)
+    public async Task<IActionResult> OnGetCallbackAsync([FromServices] LeversAndKnobs config, string returnUrl = null, string remoteError = null)
     {
       returnUrl = returnUrl ?? Url.Content("~/");
       if (remoteError != null)
@@ -93,7 +93,7 @@ namespace Kcesar.TrainingSite.Areas.Identity.Pages.Account
       {
         return RedirectToPage("./Lockout");
       }
-      else
+      else if (config.CanRegister)
       {
         // If the user does not have an account, then ask the user to create an account.
         ReturnUrl = returnUrl;
@@ -106,6 +106,10 @@ namespace Kcesar.TrainingSite.Areas.Identity.Pages.Account
           };
         }
         return Page();
+      }
+      else
+      {
+        throw new ApplicationException("Registration is currently closed");
       }
     }
 
