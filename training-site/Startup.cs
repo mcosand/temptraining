@@ -11,6 +11,8 @@ using Kcesar.TrainingSite.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.OAuth;
 
 namespace Kcesar.TrainingSite
 {
@@ -38,11 +40,19 @@ namespace Kcesar.TrainingSite
       services.AddIdentityServer()
           .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
 
+      services.AddScoped<SignInManager<ApplicationUser>, TrainingSigninManager>();
+
       services.AddAuthentication()
-          .AddGoogle(options =>
+          .AddGoogle("google", "ESAR Account", options =>
           {
             options.ClientId = Configuration["auth:google:client_id"];
             options.ClientSecret = Configuration["auth:google:client_secret"];
+            options.ClaimActions.MapJsonKey("domain", "hd", "string");
+            options.AuthorizationEndpoint += "?prompt=select_account";
+            if (!string.IsNullOrWhiteSpace(Configuration["auth:google:domains"]))
+            {
+              options.AuthorizationEndpoint += "&hd=" + System.Net.WebUtility.UrlEncode(Configuration["auth:google:domains"]);
+            }
           })
           .AddIdentityServerJwt();
 
