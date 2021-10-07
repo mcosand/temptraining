@@ -10,16 +10,18 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Kcesar.TrainingSite
+namespace Kcesar.TrainingSite.Identity
 {
-  internal class TrainingSigninManager : SignInManager<ApplicationUser>
+  internal class OrgSigninManager : SignInManager<ApplicationUser>
   {
     private readonly IConfiguration config;
+    private readonly RoleManager<IdentityRole> roles;
 
-    public TrainingSigninManager(IConfiguration config, UserManager<ApplicationUser> userManager, IHttpContextAccessor contextAccessor, IUserClaimsPrincipalFactory<ApplicationUser> claimsFactory, IOptions<IdentityOptions> optionsAccessor, ILogger<SignInManager<ApplicationUser>> logger, IAuthenticationSchemeProvider schemes, IUserConfirmation<ApplicationUser> confirmation) 
+    public OrgSigninManager(IConfiguration config, RoleManager<IdentityRole> roles, UserManager<ApplicationUser> userManager, IHttpContextAccessor contextAccessor, IUserClaimsPrincipalFactory<ApplicationUser> claimsFactory, IOptions<IdentityOptions> optionsAccessor, ILogger<SignInManager<ApplicationUser>> logger, IAuthenticationSchemeProvider schemes, IUserConfirmation<ApplicationUser> confirmation) 
       : base(userManager, contextAccessor, claimsFactory, optionsAccessor, logger, schemes, confirmation)
     {
       this.config = config;
+      this.roles = roles;
     }
 
     public override Task<SignInResult> ExternalLoginSignInAsync(string loginProvider, string providerKey, bool isPersistent)
@@ -52,7 +54,8 @@ namespace Kcesar.TrainingSite
       }
       else if (!(result.IsLockedOut || result.IsNotAllowed))
       {
-        if (info.Principal.FindFirst("domain").Value == config["auth:google:domains"])
+        var domain = info.Principal.FindFirst("domain").Value;
+        if (domain == config["auth:google:domains"])
         {
           var user = new ApplicationUser
           {
@@ -64,6 +67,14 @@ namespace Kcesar.TrainingSite
           };
           var identityResult = await UserManager.CreateAsync(user);
           await UserManager.AddLoginAsync(user, info);
+
+          var initRoles = (config[$"auth:google:{domain}:initialRoles"] ?? string.Empty).Split(',').Select(f => f.Trim()).Where(f => f.Length > 0);
+          foreach (var role in initRoles)
+          {
+            if (!await roles.RoleExistsAsync(role)) await roles.CreateAsync(new IdentityRole(role));
+          }
+          await UserManager.AddToRolesAsync(user, initRoles);
+
           result = await base.ExternalLoginSignInAsync(loginProvider, providerKey, isPersistent, bypassTwoFactor);
         }
       }

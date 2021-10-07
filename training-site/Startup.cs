@@ -1,4 +1,7 @@
+using System.Linq;
+using IdentityModel;
 using Kcesar.TrainingSite.Data;
+using Kcesar.TrainingSite.Identity;
 using Kcesar.TrainingSite.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -36,12 +39,18 @@ namespace Kcesar.TrainingSite
       services.AddDatabaseDeveloperPageExceptionFilter();
 
       services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+          .AddRoles<IdentityRole>()
+          .AddClaimsPrincipalFactory<UserClaimsFactory>()
           .AddEntityFrameworkStores<ApplicationDbContext>();
 
       services.AddIdentityServer()
-          .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
+          .AddApiAuthorization<ApplicationUser, ApplicationDbContext>(options =>
+          {
+            var profile = options.IdentityResources.Single(f => f.Name == "profile");
+            profile.UserClaims.Add(JwtClaimTypes.Role);
+          });
 
-      services.AddScoped<SignInManager<ApplicationUser>, TrainingSigninManager>();
+      services.AddScoped<SignInManager<ApplicationUser>, OrgSigninManager>();
 
       services.AddAuthentication()
           .AddGoogle("google", "ESAR Account", options =>
