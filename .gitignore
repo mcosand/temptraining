@@ -1,0 +1,23 @@
+**/wwwroot/lib/*/**/*
+**/bin/**/*
+**/obj/**/*
+**/node_modules/**
+*.user
+*.suo
+
+/website/frontend/coverage
+/website/frontend/build
+
+log-*.txt
+appsettings.local.json
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
