@@ -1,9 +1,13 @@
+using System;
 using System.Linq;
+using System.Threading.Tasks;
 using IdentityModel;
 using Kcesar.TrainingSite.Data;
 using Kcesar.TrainingSite.Identity;
 using Kcesar.TrainingSite.Models;
+using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -27,30 +31,46 @@ namespace Kcesar.TrainingSite
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
+      //services.AddSingleton(Configuration);
       services.AddSingleton(new LeversAndKnobs
       {
         CanRegister = Configuration.GetValue<bool>("openRegistration")
       });
 
-      services.AddDbContext<ApplicationDbContext>(options =>
-          options.UseSqlite(
-              Configuration.GetConnectionString("DefaultConnection")));
+      if (!string.IsNullOrWhiteSpace(Configuration.GetConnectionString(SqlServerApplicationDbContext.CONNECTION_STRING_KEY)) && Configuration.GetValue("Provider", "SqlServer") == "SqlServer")
+      {
+        Console.WriteLine("Starting with SQL Server");
+        services.AddDbContext<ApplicationDbContext, SqlServerApplicationDbContext>();
+        FinishSetup<SqlServerApplicationDbContext>(services);
+      }
+      else
+      {
+        Console.WriteLine("Starting with SQLite");
+        services.AddDbContext<ApplicationDbContext>();
+        FinishSetup<ApplicationDbContext>(services);
+      }
+    }
+
+    private void FinishSetup<ContextType>(IServiceCollection services) where ContextType : ApplicationDbContext
+    {
+      services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+          .AddUserManager<AppUserManager>()
+          .AddRoles<IdentityRole>()
+          .AddClaimsPrincipalFactory<UserClaimsFactory>()
+          .AddEntityFrameworkStores<ContextType>();
 
       services.AddDatabaseDeveloperPageExceptionFilter();
 
-      services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-          .AddRoles<IdentityRole>()
-          .AddClaimsPrincipalFactory<UserClaimsFactory>()
-          .AddEntityFrameworkStores<ApplicationDbContext>();
-
       services.AddIdentityServer()
-          .AddApiAuthorization<ApplicationUser, ApplicationDbContext>(options =>
-          {
-            var profile = options.IdentityResources.Single(f => f.Name == "profile");
-            profile.UserClaims.Add(JwtClaimTypes.Role);
-          });
+        .AddApiAuthorization<ApplicationUser, ContextType>(options =>
+        {
+          var profile = options.IdentityResources.Single(f => f.Name == "profile");
+          profile.UserClaims.Add(JwtClaimTypes.Role);
+        });
 
       services.AddScoped<SignInManager<ApplicationUser>, OrgSigninManager>();
+      services.AddScoped<AuthorizationService>();
+      services.AddSingleton<DatabaseService>();
 
       services.AddAuthentication()
           .AddGoogle("google", "ESAR Account", options =>
@@ -66,7 +86,10 @@ namespace Kcesar.TrainingSite
           })
           .AddIdentityServerJwt();
 
-      services.AddControllersWithViews();
+      services.AddControllersWithViews(options =>
+      {
+        options.Filters.Add(new HttpResponseExceptionFilter());
+      });
       services.AddRazorPages();
 
       // In production, the React files will be served from this directory

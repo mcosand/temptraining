@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Kcesar.TrainingSite.Migrations
+namespace Kcesar.TrainingSite.Migrations.Sqlite
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20211007061200_CreateIdentitySchema")]
-    partial class CreateIdentitySchema
+    [Migration("20211015061322_InitialCreate")]
+    partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -121,6 +121,64 @@ namespace Kcesar.TrainingSite.Migrations
                     b.ToTable("PersistedGrants");
                 });
 
+            modelBuilder.Entity("Kcesar.TrainingSite.Data.CourseOffering", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CourseName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Location")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("When")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Offerings");
+                });
+
+            modelBuilder.Entity("Kcesar.TrainingSite.Data.CourseSignup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CapApplies")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MemberId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("user");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OfferingId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("OnWaitList")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfferingId");
+
+                    b.ToTable("Signups");
+                });
+
             modelBuilder.Entity("Kcesar.TrainingSite.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -131,6 +189,9 @@ namespace Kcesar.TrainingSite.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("Created")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DatabaseId")
@@ -144,6 +205,9 @@ namespace Kcesar.TrainingSite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("FirstName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("LastLogin")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("LastName")
@@ -326,6 +390,17 @@ namespace Kcesar.TrainingSite.Migrations
                     b.ToTable("AspNetUserTokens");
                 });
 
+            modelBuilder.Entity("Kcesar.TrainingSite.Data.CourseSignup", b =>
+                {
+                    b.HasOne("Kcesar.TrainingSite.Data.CourseOffering", "Offering")
+                        .WithMany("Signups")
+                        .HasForeignKey("OfferingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Offering");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -375,6 +450,11 @@ namespace Kcesar.TrainingSite.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Kcesar.TrainingSite.Data.CourseOffering", b =>
+                {
+                    b.Navigation("Signups");
                 });
 #pragma warning restore 612, 618
         }

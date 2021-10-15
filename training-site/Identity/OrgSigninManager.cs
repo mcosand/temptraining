@@ -36,21 +36,12 @@ namespace Kcesar.TrainingSite.Identity
       if (result.Succeeded)
       {
         var user = await UserManager.FindByLoginAsync(loginProvider, providerKey);
-        var dirty = false;
-        var value = info.Principal.FindFirst(ClaimTypes.GivenName).Value;
-        if (!user.FirstName.Equals(value))
-        {
-          user.FirstName = value;
-          dirty = true;
-        }
-        value = info.Principal.FindFirst(ClaimTypes.Surname).Value;
-        if (!user.LastName.Equals(value))
-        {
-          user.LastName = value;
-          dirty = true;
-        }
+        
+        user.FirstName = info.Principal.FindFirst(ClaimTypes.GivenName).Value;
+        user.LastName = info.Principal.FindFirst(ClaimTypes.Surname).Value;
+        user.LastLogin = DateTimeOffset.Now;
 
-        if (dirty) await UserManager.UpdateAsync(user);
+        await UserManager.UpdateAsync(user);
       }
       else if (!(result.IsLockedOut || result.IsNotAllowed))
       {
@@ -63,7 +54,9 @@ namespace Kcesar.TrainingSite.Identity
             Email = info.Principal.FindFirst(ClaimTypes.Email).Value,
             FirstName = info.Principal.FindFirst(ClaimTypes.GivenName).Value,
             LastName = info.Principal.FindFirst(ClaimTypes.Surname).Value,
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            Created = DateTimeOffset.Now,
+            LastLogin = DateTimeOffset.Now
           };
           var identityResult = await UserManager.CreateAsync(user);
           await UserManager.AddLoginAsync(user, info);
@@ -79,6 +72,16 @@ namespace Kcesar.TrainingSite.Identity
         }
       }
       return result;
+    }
+
+    public override Task SignInAsync(ApplicationUser user, AuthenticationProperties authenticationProperties, string authenticationMethod = null)
+    {
+      return base.SignInAsync(user, authenticationProperties, authenticationMethod);
+    }
+
+    public override Task SignInAsync(ApplicationUser user, bool isPersistent, string authenticationMethod = null)
+    {
+      return base.SignInAsync(user, isPersistent, authenticationMethod);
     }
   }
 }

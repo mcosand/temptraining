@@ -1,9 +1,9 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Kcesar.TrainingSite.Migrations
+namespace Kcesar.TrainingSite.Migrations.Sqlite
 {
-    public partial class CreateIdentitySchema : Migration
+    public partial class InitialCreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -29,6 +29,8 @@ namespace Kcesar.TrainingSite.Migrations
                     FirstName = table.Column<string>(type: "TEXT", nullable: true),
                     LastName = table.Column<string>(type: "TEXT", nullable: true),
                     DatabaseId = table.Column<string>(type: "TEXT", nullable: true),
+                    Created = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    LastLogin = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
                     UserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
@@ -66,6 +68,22 @@ namespace Kcesar.TrainingSite.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DeviceCodes", x => x.UserCode);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Offerings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CourseName = table.Column<string>(type: "TEXT", nullable: true),
+                    When = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    Capacity = table.Column<int>(type: "INTEGER", nullable: false),
+                    Location = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Offerings", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -194,6 +212,31 @@ namespace Kcesar.TrainingSite.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Signups",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    user = table.Column<string>(type: "TEXT", nullable: true),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    OfferingId = table.Column<int>(type: "INTEGER", nullable: false),
+                    OnWaitList = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Created = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    CapApplies = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Deleted = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Signups", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Signups_Offerings_OfferingId",
+                        column: x => x.OfferingId,
+                        principalTable: "Offerings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -256,6 +299,11 @@ namespace Kcesar.TrainingSite.Migrations
                 name: "IX_PersistedGrants_SubjectId_SessionId_Type",
                 table: "PersistedGrants",
                 columns: new[] { "SubjectId", "SessionId", "Type" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Signups_OfferingId",
+                table: "Signups",
+                column: "OfferingId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -282,10 +330,16 @@ namespace Kcesar.TrainingSite.Migrations
                 name: "PersistedGrants");
 
             migrationBuilder.DropTable(
+                name: "Signups");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Offerings");
         }
     }
 }

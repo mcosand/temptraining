@@ -11,6 +11,21 @@ export class AuthorizeService {
     // If you want to enable pop up authentication simply set this flag to false.
     _popUpDisabled = true;
 
+    async listenUser(handler) {
+        await this.ensureUserManagerInitialized();
+        this.userManager.events.addUserLoaded(handler);
+        this.userManager.events.addUserUnloaded(() => handler(undefined));
+
+        const user = await this.userManager.getUser();
+        if (user) handler(user);
+        else handler(undefined);
+    }
+
+    async whenUserUnloaded(handler) {
+        await this.ensureUserManagerInitialized();
+        this.userManager.events.addUserUnloaded(handler);
+    }
+
     async isAuthenticated() {
         const user = await this.getUser();
         return !!user;
@@ -22,7 +37,8 @@ export class AuthorizeService {
         }
 
         await this.ensureUserManagerInitialized();
-        const user = await this.userManager.getUser();
+      const user = await this.userManager.getUser();
+      console.log(user);
         return user && user.profile;
     }
 

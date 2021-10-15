@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System;
+using Microsoft.AspNetCore.Identity;
 
 namespace Kcesar.TrainingSite.Models
 {
@@ -8,5 +9,9 @@ namespace Kcesar.TrainingSite.Models
     public string LastName { get; set; }
 
     public string DatabaseId { get; set; }
+
+    public DateTimeOffset Created { get; set; }
+
+    public DateTimeOffset? LastLogin { get; set; }
   }
 }
