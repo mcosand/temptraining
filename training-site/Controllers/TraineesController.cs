@@ -35,7 +35,7 @@ namespace Kcesar.TrainingSite.Controllers
       await authz.AssertIsMemberOrSelf(User, traineeId);
 
       var user = await users.FindByIdAsync(traineeId);
-      if (user == null)
+      if (user == null || string.IsNullOrWhiteSpace(user.DatabaseId))
       {
         throw new HttpResponseException(404, "Not found");
       }

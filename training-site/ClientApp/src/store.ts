@@ -53,15 +53,24 @@ export class TrainingStore {
   @action.bound
   async loadTrainee(traineeId?: string) {
     try {
-      const t = await this.apiGet<any>(`/api/trainees/${traineeId}`);
-      runInAction(() => this.viewTrainee = t);
+      if (!traineeId) traineeId = this.user?.profile.sub;
+
+      var t :Trainee|undefined = await this.apiGet<Trainee|undefined>(`/api/trainees/${traineeId}`);
+      if (!t?.id) t = undefined;
+
+      runInAction(() => {
+        this.viewTrainee = t;
+        this.progress = {};
+        this.schedule = {};
+      });
+
+      if (!t) return;
+      
   console.log(this.viewTrainee)
 
       const c = (await this.apiGet<{items: TrainingRecord[]}>(`/api/trainees/${traineeId}/completed`)).items
                   .reduce((accum, cur) => ({...accum, [cur.course.name]: cur}), {} as Completed);
       let progress :{[taskTitle: string]: TaskProgress }= {};
-
-      console.log(JSON.parse(JSON.stringify(this.taskList)));
 
       for (let i=0; i<this.taskList.length; i++) {
         const task = this.taskList[i];
